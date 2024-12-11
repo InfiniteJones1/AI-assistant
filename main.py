@@ -25,20 +25,22 @@ def main():
     logging.info("开始生成行程计划...")
     itinerary = generate_itinerary(parsed_info)
     logging.info(f"生成的大致行程计划: {itinerary}")
+    print(f"\n生成的大致行程计划：{itinerary}")
 
     # Step 3: 调用其他服务完善行程
-    logging.info("开始完善行程计划...")
-    detailed_itinerary = enrich_itinerary(itinerary, parsed_info)
-    logging.info(f"完善后的行程计划: {detailed_itinerary}")
+    #logging.info("开始完善行程计划...")
+    #detailed_itinerary = enrich_itinerary(itinerary, parsed_info)
+    #logging.info(f"完善后的行程计划: {detailed_itinerary}")
 
     # Step 4: 输出结果
-    formatted_itinerary = format_plan(detailed_itinerary)
-    print("\n生成的行程计划：")
-    print(formatted_itinerary)
+    #formatted_itinerary = format_plan(detailed_itinerary)
+    #print("\n生成的行程计划：")
+    #print(formatted_itinerary)
 
     # 保存日志
-    save_log({"input": user_input, "parsed": parsed_info, "plan": detailed_itinerary})
-    logging.info("行程计划已保存日志。")
+    #save_log({"input": user_input, "parsed": parsed_info, "plan": detailed_itinerary})
+    #logging.info("行程计划已保存日志。")
 
 if __name__ == "__main__":
     main()
+    input("按回车键Enter退出...")

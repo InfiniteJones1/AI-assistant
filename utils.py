@@ -10,36 +10,49 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',  # 日志格式
 )
 
-# 输入解析
-def parse_trip_description(description):
+#初步获取信息
+def parse_trip_description(user_input):
     logging.info("开始解析行程描述...")
-    api_key = CONFIG["OPENAI_API_KEY"]
-    
-    # 设置 OpenAI API 密钥
-    OpenAI.api_key = api_key
+    API_key = CONFIG["MOONSHOT_API_KEY"]
+
+    client = OpenAI(
+        api_key=API_key,
+        base_url="https://api.moonshot.cn/v1",
+    )
 
     try:
+        description = f"""拆解信息：{user_input}。
+        格式如下：
+        出发地：xxx,
+        目的地：xxx,
+        出发日期：xxx,
+        返回日期：xxx,
+        活动偏好：xxx,
+        预算：xxx。
+        """
+                
         logging.info(f"发送请求到API，行程描述: {description}")
         
-        # 发送请求到 chat/completions 端点
-        response = OpenAI.chat.completions.create(
-            model="gpt-4o-mini",  # 使用 GPT-4 模型，也可以使用 gpt-3.5-turbo
+        # 调用 OpenAI API 的 chat.completions 端点
+        response = client.chat.completions.create(
+            model="moonshot-v1-8k",
             messages=[
                 {"role": "user", "content": description}
-            ]
+            ],
+            temperature = 0.3,
         )
 
-        # 获取响应中的结果        
-        parsed_info = response['choices'][0]['message']['content']
-        
+        # 解析返回内容
+        parsed_info = response.choices[0].message.content
+
         if not parsed_info:
             parsed_info = '无信息'
         
-        logging.info("成功解析行程描述")
+        logging.info(f"成功解析行程描述。解析内容：{parsed_info}")
         return parsed_info
 
-    except:
-        logging.error(f"API 请求失败，错误信息。")
+    except Exception as e:
+        logging.error(f"API 请求失败，错误信息: {str(e)}")
         return None
 
 # 输出格式化
