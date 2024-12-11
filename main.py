@@ -1,33 +1,44 @@
-import os
-import getData
-import normalizingData
-import pandas as pd
-import createStatistics
-import matplotlib.pyplot as plt
+import config
+import logging
+from utils import parse_trip_description, format_plan
+from API import generate_itinerary, enrich_itinerary
+from data import save_log
 
-stock_symbol = "NVDA"
-epsilon = 1
-getData.getSingleData(stock_symbol, 1, 1, 0)
-filename = stock_symbol + '_historicals.csv'
-path = os.path.join('.', 'data', filename)
-data = pd.read_csv(path)
-data = normalizingData.normalizeData(data, epsilon)
-data.to_csv(path, index=False)
-distribution = createStatistics.naiveEstimator(data)
+# 配置日志
+logging.basicConfig(
+    filename='itinerary_assistant.log',  # 日志文件名
+    level=logging.INFO,  # 日志级别
+    format='%(asctime)s - %(levelname)s - %(message)s',  # 日志格式
+)
 
+def main():
+    logging.info("程序启动，欢迎使用智能行程助手！")
+    print("欢迎使用智能行程助手！")
+    user_input = input("请描述您的行程需求：\n")
 
-def plot_distribution(estimated_distribution):
-    lengths = list(estimated_distribution.keys())
-    frequencies = list(estimated_distribution.values())
-    plt.figure(figsize=(10, 5))
-    plt.bar(lengths, frequencies, color='skyblue', edgecolor='black')
-    plt.xlabel('Interval Length')
-    plt.ylabel('Frequency')
-    plt.title('Distribution of Interval Lengths:' + stock_symbol + " epsilon:" + str(epsilon))
-    plt.show()
+    # Step 1: 使用 Chatgpt 解析输入
+    logging.info(f"用户输入的行程需求: {user_input}")
+    parsed_info = parse_trip_description(user_input)
+    logging.info(f"解析后的行程信息: {parsed_info}")
 
+    # Step 2: 调用 ChatGPT 生成大致行程计划
+    logging.info("开始生成行程计划...")
+    itinerary = generate_itinerary(parsed_info)
+    logging.info(f"生成的大致行程计划: {itinerary}")
 
-variance_normal, variance_price = createStatistics.normalizedVariance(data)
-print("Variance of normalized data is: " + str(variance_normal))
-print("Variance of close price data is: " + str(variance_price))
-plot_distribution(distribution)
+    # Step 3: 调用其他服务完善行程
+    logging.info("开始完善行程计划...")
+    detailed_itinerary = enrich_itinerary(itinerary, parsed_info)
+    logging.info(f"完善后的行程计划: {detailed_itinerary}")
+
+    # Step 4: 输出结果
+    formatted_itinerary = format_plan(detailed_itinerary)
+    print("\n生成的行程计划：")
+    print(formatted_itinerary)
+
+    # 保存日志
+    save_log({"input": user_input, "parsed": parsed_info, "plan": detailed_itinerary})
+    logging.info("行程计划已保存日志。")
+
+if __name__ == "__main__":
+    main()
