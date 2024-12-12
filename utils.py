@@ -1,4 +1,5 @@
 import requests
+import re
 import logging
 from config import CONFIG
 from openai import OpenAI
@@ -55,9 +56,35 @@ def parse_trip_description(user_input):
         logging.error(f"API 请求失败，错误信息: {str(e)}")
         return None
 
-# 输出格式化
-def format_plan(plan):
-    logging.info(f"开始格式化行程计划...")
-    formatted_plan = f"行程计划：\n{plan}"
-    logging.info("行程计划格式化成功")
-    return formatted_plan
+
+# 将解析后的行程信息转换为字典
+def parse_to_dict(parsed_info):
+    logging.info("开始将解析后的行程信息转换为字典...")
+    try:
+        # 使用正则表达式提取信息
+        fields = {
+            "出发地": r"出发地：(.+)",
+            "目的地": r"目的地：(.+)",
+            "出发日期": r"出发日期：(.+)",
+            "返回日期": r"返回日期：(.+)",
+            "活动偏好": r"活动偏好：(.+)",
+            "预算": r"预算：(.+)"
+        }
+
+        # 初始化字典
+        parsed_dict = {}
+        for key, pattern in fields.items():
+            match = re.search(pattern, parsed_info)
+            if match:
+                parsed_dict[key] = match.group(1).strip()
+            else:
+                parsed_dict[key] = None  # 如果没有匹配到则设置为 None
+
+        logging.info(f"转换成功，结果为：{parsed_dict}")
+        return parsed_dict
+
+    except Exception as e:
+        logging.error(f"转换行程信息为字典失败，错误信息: {str(e)}")
+        return None
+
+

@@ -1,6 +1,7 @@
 import config
 import logging
-from utils import parse_trip_description, format_plan
+import utils
+from utils import parse_trip_description
 from API import generate_itinerary, enrich_itinerary
 from data import save_log
 
@@ -18,19 +19,21 @@ def main():
 
     # Step 1: 使用 Chatgpt 解析输入
     logging.info(f"用户输入的行程需求: {user_input}")
-    parsed_info = parse_trip_description(user_input)
+    parsed_info = utils.parse_trip_description(user_input)
     logging.info(f"解析后的行程信息: {parsed_info}")
+    dict_info = utils.parse_to_dict(parsed_info)
 
-    # Step 2: 调用 ChatGPT 生成大致行程计划
+    # Step 2: 调用其他API生成补充信息
     logging.info("开始生成行程计划...")
-    itinerary = generate_itinerary(parsed_info)
-    logging.info(f"生成的大致行程计划: {itinerary}")
-    print(f"\n生成的大致行程计划：{itinerary}")
+    other_info = enrich_itinerary(dict_info)
+    logging.info(f"生成的补充信息: {other_info}")
+    print(f"\n生成的补充信息：{other_info}")
 
-    # Step 3: 调用其他服务完善行程
-    #logging.info("开始完善行程计划...")
-    #detailed_itinerary = enrich_itinerary(itinerary, parsed_info)
-    #logging.info(f"完善后的行程计划: {detailed_itinerary}")
+    # Step 3: 调用kimi完善行程
+    logging.info("开始完善行程计划...")
+    detailed_itinerary = generate_itinerary(dict_info, other_info)
+    logging.info(f"生成完善信息: {detailed_itinerary}")
+    print(f"\n完善后的行程计划：{detailed_itinerary}")
 
     # Step 4: 输出结果
     #formatted_itinerary = format_plan(detailed_itinerary)
