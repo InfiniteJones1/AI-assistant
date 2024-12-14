@@ -25,8 +25,8 @@ def generate_itinerary(dict_info, other_info):
     )
     
     try:
-        prompt = f"""信息：{dict_info}。补充信息：{other_info}
-        根据以上信息生成一个详细的行程计划，包括订票和订酒店等。
+        prompt = f"""信息：{dict_info}。补充信息：{other_info}。
+        根据以上信息和补充信息生成一个详细的行程计划。
         """
         response = client.chat.completions.create(
             model="moonshot-v1-8k",
@@ -52,11 +52,11 @@ def enrich_itinerary(dict_info):
     #route = get_route(dict_info["departure"], dict_info["destination"])
     #other_info["route"]=route
 
-    flight_go=get_flight_info(dict_info['出发地'], dict_info['目的地'], dict_info['出发日期'])
-    other_info["启程航班"]=flight_go
+    #flight_go=get_flight_info(dict_info['出发地'], dict_info['目的地'], dict_info['出发日期'])
+    #other_info["启程航班"]=flight_go
 
-    flight_return=get_flight_info(dict_info['出发地'], dict_info['目的地'], dict_info['返回日期'])
-    other_info["返程航班"]=flight_return
+    #flight_return=get_flight_info(dict_info['出发地'], dict_info['目的地'], dict_info['返回日期'])
+    #other_info["返程航班"]=flight_return
 
     #train_go=get_train_info(dict_info['出发地'], dict_info['目的地'], dict_info['出发日期'])
     #train_return=get_train_info(dict_info['出发地'], dict_info['目的地'], dict_info['返回日期'])
@@ -156,19 +156,7 @@ def get_weather(destination):
         return None
 
 
-
-# 获取路线信息
-def get_route(departure, destination):
-    logging.info("获取路线信息...")
-    api_url = f"https://maps.googleapis.com/maps/api/directions/json"
-    params = {"origin": departure, "destination": destination, "mode": "driving", "key": CONFIG["MAPS_API_KEY"]}
-    response = requests.get(api_url, params=params)
-    route = response.json()["routes"][0]["overview_polyline"]["points"]
-    logging.info("获取路线信息成功。")
-    return f"从 {departure} 到 {destination} 的最佳路线（驾车）：{route}"
-
-
-
+#航班车次酒店API
 # 设置headers
 header = {
     'accept': 'application/json',
@@ -230,3 +218,4 @@ def get_hotel_info(city, check_in, check_out):
         })
     logging.info("获取航班信息成功。")
     return hotel_data  # 返回酒店数据列表（数组）
+

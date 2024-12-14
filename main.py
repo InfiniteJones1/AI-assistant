@@ -4,6 +4,7 @@ import utils
 from utils import parse_trip_description
 from API import generate_itinerary, enrich_itinerary
 from data import save_log
+from map import generate_route, create_map
 
 # 配置日志
 logging.basicConfig(
@@ -43,6 +44,12 @@ def main():
     # 保存日志
     #save_log({"input": user_input, "parsed": parsed_info, "plan": detailed_itinerary})
     #logging.info("行程计划已保存日志。")
+
+    #绘制路线图/地图
+    route = generate_route(detailed_itinerary)
+    map = create_map(route)
+    print(f"\n生成路线图如下：{map}")
+
 
 if __name__ == "__main__":
     main()
