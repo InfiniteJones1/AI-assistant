@@ -4,8 +4,8 @@ import utils
 from utils import parse_trip_description
 from API import generate_itinerary, enrich_itinerary
 from data import save_log
-from map import generate_route, create_map
-
+from map import get_daily_routes, get_coordinates, plot_route_map, public_trans
+from API2 import get_station_code, validate_input, fetch_train_info, print_train_info, train_ticket_query
 # 配置日志
 logging.basicConfig(
     filename='itinerary_assistant.log',  # 日志文件名
@@ -23,6 +23,7 @@ def main():
     parsed_info = utils.parse_trip_description(user_input)
     logging.info(f"解析后的行程信息: {parsed_info}")
     dict_info = utils.parse_to_dict(parsed_info)
+    print(dict_info)
 
     # Step 2: 调用其他API生成补充信息
     logging.info("开始生成行程计划...")
@@ -36,19 +37,16 @@ def main():
     logging.info(f"生成完善信息: {detailed_itinerary}")
     print(f"\n完善后的行程计划：{detailed_itinerary}")
 
-    # Step 4: 输出结果
-    #formatted_itinerary = format_plan(detailed_itinerary)
-    #print("\n生成的行程计划：")
-    #print(formatted_itinerary)
-
-    # 保存日志
-    #save_log({"input": user_input, "parsed": parsed_info, "plan": detailed_itinerary})
-    #logging.info("行程计划已保存日志。")
-
     #绘制路线图/地图
-    route = generate_route(detailed_itinerary)
-    map = create_map(route)
-    print(f"\n生成路线图如下：{map}")
+    #route = get_daily_routes(detailed_itinerary)
+    #print(f"路线：{route}")
+    #logging.info("开始生成路线并绘制地图...")
+    #coor_route=get_coordinates(route)
+    #print(f"坐标：{coor_route}")
+    #route_data = public_trans(coor_route)
+    #plot_route_map(route_data, coor_route)
+
+    
 
 
 if __name__ == "__main__":

@@ -22,14 +22,14 @@ def parse_trip_description(user_input):
     )
 
     try:
-        description = f"""拆解信息：{user_input}。
-        格式如下：
-        出发地：xxx,
-        目的地：xxx,
-        出发日期：xxx,
-        返回日期：xxx,
-        活动偏好：xxx,
-        预算：xxx。
+        description = f"""补充推荐信息/拆解信息：{user_input},不确定/没有信息只要写‘无’。
+        严格按照以下格式，不相关的信息不要写：
+        出发地：xxx
+        目的地：xxx
+        出发日期：MM-DD
+        返回日期：MM-DD
+        活动偏好：xxx
+        预算：xxx
         """
                 
         logging.info(f"发送请求到API，行程描述: {description}")

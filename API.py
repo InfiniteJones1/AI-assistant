@@ -3,14 +3,22 @@ import requests
 import logging
 import pandas as pd
 import os
+import json
 from config import CONFIG
+import datetime
 from bs4 import BeautifulSoup
+import re
+from datetime import datetime
+from API2 import get_station_code, validate_input, fetch_train_info, load_city_data, print_train_info, train_ticket_query
 
 logging.basicConfig(
     filename='API.log',  # 日志文件名
     level=logging.INFO,  # 日志级别
     format='%(asctime)s - %(levelname)s - %(message)s',  # 日志格式
 )
+
+username = CONFIG['12306username']
+password = CONFIG["12306password"]
 
 #API 调用
 def generate_itinerary(dict_info, other_info):
@@ -48,24 +56,9 @@ def enrich_itinerary(dict_info):
     weather = get_weather(dict_info["目的地"])
     other_info["目的地天气"]=weather
 
-    # 添加路线信息
-    #route = get_route(dict_info["departure"], dict_info["destination"])
-    #other_info["route"]=route
-
-    #flight_go=get_flight_info(dict_info['出发地'], dict_info['目的地'], dict_info['出发日期'])
-    #other_info["启程航班"]=flight_go
-
-    #flight_return=get_flight_info(dict_info['出发地'], dict_info['目的地'], dict_info['返回日期'])
-    #other_info["返程航班"]=flight_return
-
-    #train_go=get_train_info(dict_info['出发地'], dict_info['目的地'], dict_info['出发日期'])
-    #train_return=get_train_info(dict_info['出发地'], dict_info['目的地'], dict_info['返回日期'])
-    #other_info["启程车次"]=train_go
-    #other_info["返程车次"]=train_return
-
-    #hotel_info=get_hotel_info(dict_info['目的地'], dict_info['出发日期'], dict_info['返回日期'])
-    #other_info["酒店信息"]=hotel_info
-
+    # 查询机票
+    train = train_ticket_query(dict_info, load_city_data("city12306.json"))
+    other_info["火车票信息"]=train
 
     logging.info(f"补充信息：{other_info}")
     return other_info
@@ -154,68 +147,4 @@ def get_weather(destination):
     except requests.RequestException as e:
         logging.error(f"请求天气信息时发生错误: {e}")
         return None
-
-
-#航班车次酒店API
-# 设置headers
-header = {
-    'accept': 'application/json',
-    'accept-language': 'zh-CN,zh;q=0.9',
-    'content-type': 'application/json;charset=UTF-8',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-}
-
-# 获取航班信息
-def get_flight_info(departure, arrival, date):
-    url1 = f'https://flights.ctrip.com/schedule/{departure}.{arrival}.html?date={date}'
-    req = requests.get(url=url1, headers=header).text
-    soup = BeautifulSoup(req, 'html.parser')
-    
-    flight_data = []
-    for i in soup.select('ul[id="list"] li div a'):
-        url2 = 'https://flights.ctrip.com' + i.get('href')
-        req2 = requests.get(url=url2, headers=header).text
-        soup = BeautifulSoup(req2, 'html.parser')
-        
-        for i in soup.select('ul[id="ulD_Domestic"] li div a'):
-            ks, js = i.get('href').replace('/schedule/', '').replace('.html', '').split('.')
-            curl = 'https://flights.ctrip.com/schedule/getScheduleByCityPair'
-            data = {"departureCityCode": f'{str(ks).upper()}', "arriveCityCode": f'{str(js).upper()}', "pageNo": 1}
-            req = requests.post(url=curl, headers=header, json=data).json()
-            max_page = req['totalPage']
-            flight_data.extend(req['scheduleVOList'])
-            for i in range(2, max_page + 1):
-                req = requests.post(url=curl, headers=header, json={**data, 'pageNo': i}).json()
-                flight_data.extend(req['scheduleVOList'])
-    logging.info("获取航班信息成功。")
-    return flight_data  # 返回航班数据列表（数组）
-
-# 获取火车票信息
-def get_train_info(departure, arrival, date):
-    url = f'https://www.12306.cn/index/script/core/common.js'  # 假设12306有相关数据
-    params = {'from': departure, 'to': arrival, 'date': date}
-    req = requests.get(url, params=params, headers=header).json()
-    
-    train_data = req['trainList']  # 这是假设返回的字段，根据实际API调整
-    logging.info("获取车次信息成功。")
-    return train_data  # 返回火车票数据列表（数组）
-
-# 获取酒店信息
-def get_hotel_info(city, check_in, check_out):
-    url = f'https://hotels.ctrip.com/hotel/{city}.html?checkin={check_in}&checkout={check_out}'
-    req = requests.get(url=url, headers=header).text
-    soup = BeautifulSoup(req, 'html.parser')
-    
-    hotel_data = []
-    for hotel in soup.select('div.hotel_item'):
-        name = hotel.select_one('a.hotel_name').text
-        price = hotel.select_one('span.price').text
-        rating = hotel.select_one('span.hotel_rating').text
-        hotel_data.append({
-            'name': name,
-            'price': price,
-            'rating': rating
-        })
-    logging.info("获取航班信息成功。")
-    return hotel_data  # 返回酒店数据列表（数组）
 

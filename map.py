@@ -4,16 +4,9 @@ import webbrowser
 import requests
 import logging
 import json
-import time
 from openai import OpenAI
 from config import CONFIG
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("route_planner.log"), logging.StreamHandler()]
-)
 
 # 配置 API 密钥
 MOONSHOT_API_KEY = CONFIG["MOONSHOT_API_KEY"]
@@ -24,6 +17,9 @@ client = OpenAI(
     api_key=MOONSHOT_API_KEY,
     base_url="https://api.moonshot.cn/v1",
 )
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def get_daily_routes(info):
     """
@@ -56,17 +52,17 @@ def get_daily_routes(info):
         except json.JSONDecodeError:
             logging.warning("API 返回的内容不是标准 JSON 格式，尝试修正格式...")
 
-        # 修正可能存在的问题
+            # 修正可能存在的问题
             repaired_content = content.split("{", 1)[-1]  # 截取第一个 `{` 后的内容
             repaired_content = "{" + repaired_content  # 补回丢失的 `{`
             repaired_content = repaired_content.rsplit("}", 1)[0] + "}"  # 截取最后一个 `}` 前的内容
 
-        # 替换常见问题符号
+            # 替换常见问题符号
             repaired_content = repaired_content.replace("'", "\"").strip()  # 单引号 -> 双引号
             repaired_content = repaired_content.replace("“", "\"").replace("”", "\"")  # 修正中文引号
             repaired_content = repaired_content.replace("\n", "")  # 删除多余换行符
 
-        # 再次尝试解析为 JSON
+            # 再次尝试解析为 JSON
             try:
                 parsed_content = json.loads(repaired_content)
                 logging.info(f"修正后的内容解析成功！内容：{parsed_content}")
@@ -78,8 +74,6 @@ def get_daily_routes(info):
     except Exception as e:
         logging.error(f"Kimi API 调用失败: {e}")
         return {}
-
-
 
 def get_coordinates(routes):
     """
@@ -107,7 +101,6 @@ def get_coordinates(routes):
                 logging.error(f"获取 {loc} 经纬度时出错: {e}")
         coordinates[day] = daily_coords
     return coordinates
-
 
 def get_user_location():
     """
@@ -193,10 +186,14 @@ def public_trans(coordinates):
                                         })
 
                                         # 打印信息
-                                        print(f"公交路线: {line_name}")
-                                        print(f"起点: {start_station}, 终点: {end_station}")
-                                        print(f"时长: {segment_time}, 距离: {segment_distance}米")
-                                        print(f"坐标点: {line_points}")
+                                        #print(f"公交路线: {line_name}")
+                                        #print(f"起点: {start_station}, 终点: {end_station}")
+                                        #print(f"时长: {segment_time}, 距离: {segment_distance}米")
+                                        #print(f"坐标点: {line_points}")
+                                        logging.info(
+                                            f"路线: {line_name} 从 {start_station} 到 {end_station}, "
+                                            f"距离: {segment_distance} 米, 时间: {segment_time} 分钟, 坐标点：{line_points}"
+                                        )
                         else:
                             logging.warning(f"天地图 API 返回错误: {data.get('msg', '未知错误')}")
                     except json.JSONDecodeError:
@@ -211,6 +208,7 @@ def public_trans(coordinates):
         routes[day] = day_routes
 
     return routes
+
 
 
 
